@@ -80,6 +80,10 @@ while True:
         EmptyPassCheck()
         
     elif event == 'Расшифровать':
+        password = values['-PASS-']
+        conn = sqlite3.connect('password.db')
+        cursor = conn.cursor()
+        conn.commit()
         
         def passDecrypt():
             passwordDecrypt = password.encode('utf-8')
@@ -89,8 +93,8 @@ while True:
             cursor.execute("SELECT ciphered_bytes FROM password"); DecryptedBytes = bytes(ast.literal_eval(str(cursor.fetchall())[3:-4]))
             cipher_decrypt = AES.new(keyDecrypt, AES.MODE_CFB, iv=ivDecrypt)
             deciphered_bytes = cipher_decrypt.decrypt(DecryptedBytes)
-            decrypted_data = deciphered_bytes.decode('utf-8')
-            if decrypted_data == values['-PASS-']:
+            decrypted_data = deciphered_bytes#.decode('utf-8')
+            if decrypted_data == values['-PASS-'].encode('utf-8'):
                 sg.popup("Мастер-ключ успешно расшифрован")
             else:
                 sg.popup("Ошибка! Скорее всего Вы ввели неправильный мастер-ключ!")
