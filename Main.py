@@ -1,7 +1,6 @@
 import PySimpleGUI as sg
 import random
 import string
-import os
 import sqlite3
 import ast
 from Crypto.Random import get_random_bytes
