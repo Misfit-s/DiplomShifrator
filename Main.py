@@ -22,15 +22,15 @@ window = sg.Window('Шифрование слова', layout)
 while True:
     event, values = window.read()
     
+    password = values['-PASS-']
+    conn = sqlite3.connect('password.db')
+    cursor = conn.cursor()
+    conn.commit()
+        
     if event == sg.WINDOW_CLOSED:
         break
     
     elif event == 'Зашифровать':
-        password = values['-PASS-']
-        
-        conn = sqlite3.connect('password.db')
-        cursor = conn.cursor()
-        conn.commit()
                 
         def PassEncrypt(password):
             password = password.encode("utf-8")
@@ -80,10 +80,6 @@ while True:
         EmptyPassCheck()
         
     elif event == 'Расшифровать':
-        password = values['-PASS-']
-        conn = sqlite3.connect('password.db')
-        cursor = conn.cursor()
-        conn.commit()
         
         def passDecrypt():
             passwordDecrypt = password.encode('utf-8')
