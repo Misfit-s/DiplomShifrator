@@ -60,17 +60,17 @@ while True:
             key = PBKDF2(passwrd, salt, dkLen=32)
             # Создание объекта и указание режима шифрования Cipher Feedback,
             # Который позволяет работать с данными меньше размера блока шифра
-            cipher_encrypt = AES.new(key, AES.MODE_CFB)
+            cipherEncrypt = AES.new(key, AES.MODE_CFB)
             # Шифрование мастер-ключа с использованием объекта
-            # cipher_encrypt и запись его в переменную ciphered_bytes
-            ciphered_bytes = cipher_encrypt.encrypt(
+            # cipherEncrypt и запись его в переменную cipheredBytes
+            cipheredBytes = cipherEncrypt.encrypt(
                 passwrd)
             # Запись зашифрованного мастер-ключа в базу данных
-            cursor.execute(f"UPDATE password SET ciphered_bytes = "
-                           f"'{list(ciphered_bytes)}';")
+            cursor.execute(f"UPDATE password SET cipheredBytes = "
+                           f"'{list(cipheredBytes)}';")
             conn.commit()
             # Запись iv в переменную
-            iv = cipher_encrypt.iv
+            iv = cipherEncrypt.iv
             # Запись iv в базу данных
             cursor.execute(f"UPDATE password SET iv = '{list(iv)}';")
             conn.commit()
@@ -82,9 +82,9 @@ while True:
             cursor.execute("SELECT name FROM sqlite_master WHERE type='table' "
                            "AND name='password'")
             # Извлечение всех результатов запроса из объекта cursor
-            table_exists = cursor.fetchall()
+            tableExists = cursor.fetchall()
 
-            if table_exists:
+            if tableExists:
 
                 dbInit = sg.popup("База данных инициализированна!")
 
@@ -97,7 +97,7 @@ while True:
                     cursor.execute("""INSERT INTO password (
                                    salt,
                                    iv,
-                                   ciphered_bytes) 
+                                   cipheredBytes) 
                                    VALUES (NULL, NULL, NULL);""")
                     conn.commit()
                     PassEncrypt(password)
@@ -111,13 +111,13 @@ while True:
                 createTable = """CREATE TABLE password ( 
                               salt TEXT,
                               iv TEXT,
-                              ciphered_bytes TEXT)"""
+                              cipheredBytes TEXT)"""
                 cursor.execute(createTable)
                 conn.commit()
                 cursor.execute("""INSERT INTO password (
                                salt,
                                iv,
-                               ciphered_bytes)
+                               cipheredBytes)
                                VALUES (NULL, NULL, NULL);""")
                 conn.commit()
                 dbDone = sg.popup("База данных создана и настроена!")
@@ -129,9 +129,9 @@ while True:
             # Проверка, является ли поле ввода мастер-ключа пустым
             # или наполненным пробелами
             if password.strip() == '':
-                new_text = 'Вы не ввели мастер-ключ!'
+                newText = 'Вы не ввели мастер-ключ!'
                 # Вывод уведомления об отсутствии мастер-ключа
-                window['-TEXT-'].update(new_text)
+                window['-TEXT-'].update(newText)
             else:
                 # Очистка поля уведомления
                 window['-TEXT-'].update('')
@@ -159,17 +159,17 @@ while True:
             # Запись iv в переменную
             ivDecrypt = bytes(ast.literal_eval(str(cursor.fetchall())[3:-4]))
             # Чтение зашифрованного мастер-ключа из базы данных
-            cursor.execute("SELECT ciphered_bytes FROM password")
+            cursor.execute("SELECT cipheredBytes FROM password")
             # Запись зашифрованного мастер-ключа в переменную
-            DecryptedBytes = bytes(ast.literal_eval
+            decryptedBytes = bytes(ast.literal_eval
                                    (str(cursor.fetchall())[3:-4]))
             # Создание объекта на основе расшифрованных ключа и iv
-            cipher_decrypt = AES.new(keyDecrypt, AES.MODE_CFB, iv=ivDecrypt)
+            cipherDecrypt = AES.new(keyDecrypt, AES.MODE_CFB, iv=ivDecrypt)
             # Расшифровка мастер-ключа
-            deciphered_bytes = cipher_decrypt.decrypt(DecryptedBytes)
+            decipheredBytes = cipherDecrypt.decrypt(decryptedBytes)
 
             # Проверка, сходятся ли расшифрованный мастер-ключ с введённым
-            if deciphered_bytes == values['-PASS-'].encode('utf-8'):
+            if decipheredBytes == values['-PASS-'].encode('utf-8'):
 
                 sg.popup("Мастер-ключ успешно расшифрован")
 
@@ -184,42 +184,42 @@ while True:
 
         def PassGen():
             # Запись в переменную выбранной длинны мастер-ключа
-            pass_length = int(values['-LENGTH-'])
+            passLength = int(values['-LENGTH-'])
             # Лист символов мастер-ключа
-            GenPass = []
+            genPass = []
 
             # Цикл генерации случайных символов
-            for i in range(pass_length):
+            for i in range(passLength):
 
                 # Добавление в лист мастер-ключа случайных символов
                 # латиницы нижнего регистра
-                GenPass.append(random.choice(string.ascii_lowercase))
+                genPass.append(random.choice(string.ascii_lowercase))
 
                 # Проверка, выбран ли параметр цифр
                 if values['-NUMBER-']:
 
                     # Добавление в лист мастер-ключа случайных цифр
-                    GenPass.append(random.choice(string.digits))
+                    genPass.append(random.choice(string.digits))
 
                 # Проверка, выбран ли параметр специальных знаков
                 if values['-SPEC-']:
 
                     # Добавление в лист мастер-ключа
                     # случайных специальных знаков
-                    GenPass.append(random.choice(string.punctuation))
+                    genPass.append(random.choice(string.punctuation))
 
                 # Проверка, выбран ли параметр верхнего регистра
                 if values['-REGISTER-']:
 
                     # Добавление в лист мастер-ключа случайного
                     # символа верхнего регистра
-                    GenPass.append(random.choice(string.ascii_uppercase))
+                    genPass.append(random.choice(string.ascii_uppercase))
 
             # Перемешивание символов в случайном порядке в листе мастер-ключа
-            random.shuffle(GenPass)
+            random.shuffle(genPass)
 
             # Вывод сгенерированного мастер-ключа в поле ввода
-            window['-PASS-'].update("".join(map(str, GenPass))[:pass_length])
+            window['-PASS-'].update("".join(map(str, genPass))[:passLength])
 
         PassGen()
 
