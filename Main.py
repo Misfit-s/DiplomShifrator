@@ -33,13 +33,13 @@ window = sg.Window('Шифрование слова', layout)
 while True:
     event, values = window.read()
 
-    # Указание завершения программы при нажатии на кнопку закрытия окна
+    # Завершения программы при нажатии на кнопку закрытия окна
     if event == sg.WINDOW_CLOSED:
         break
 
     elif event == 'Зашифровать':
 
-        # Переменная password будет равна введённому в поле мастер-ключу
+        # Переменная password равна введённому в поле мастер-ключу
         password = values['-PASS-']
         # Переменная, отвечающая за подключение к базе данных
         conn = sqlite3.connect('password.db')
@@ -48,63 +48,63 @@ while True:
         # Функция выполнения SQL запросов
         conn.commit()
 
-        # Функция шифрования мастер-ключа
         def PassEncrypt(passwrd):
             # Кодирование мастер-ключа в кодировку utf-8
             passwrd = passwrd.encode("utf-8")
             # Генерация соли
             salt = get_random_bytes(32)
-            cursor.execute(f"UPDATE password SET salt = '{list(salt)}';")
             # Занесение соли в базу данных
+            cursor.execute(f"UPDATE password SET salt = '{list(salt)}';")
             conn.commit()
             # Генерация ключа на основе мастер-ключа и соли
             key = PBKDF2(passwrd, salt, dkLen=32)
             # Создание объекта и указание режима шифрования Cipher Feedback,
-            # Который позволяет работать с данными меньше размера блока шифра.
+            # Который позволяет работать с данными меньше размера блока шифра
             cipher_encrypt = AES.new(key, AES.MODE_CFB)
             # Шифрование мастер-ключа с использованием объекта
             # cipher_encrypt и запись его в переменную ciphered_bytes
             ciphered_bytes = cipher_encrypt.encrypt(
                 passwrd)
+            # Запись зашифрованного мастер-ключа в базу данных
             cursor.execute(f"UPDATE password SET ciphered_bytes = "
                            f"'{list(ciphered_bytes)}';")
-            # Запись зашифрованного мастер-ключа в базу данных
             conn.commit()
             # Запись iv в переменную
             iv = cipher_encrypt.iv
-            cursor.execute(f"UPDATE password SET iv = '{list(iv)}';")
             # Запись iv в базу данных
+            cursor.execute(f"UPDATE password SET iv = '{list(iv)}';")
             conn.commit()
             # Показ сообщения об успешности шифрования мастер-ключа
             sg.popup("Ваш мастер-ключ успешно зашифрован!")
 
-        # Функция проверки существования базы данных
         def CheckDbExists():
-            # Указание запроса для проверки существования базы данных
+            # Запрос для проверки существования базы данных
             cursor.execute("SELECT name FROM sqlite_master WHERE type='table' "
                            "AND name='password'")
             # Извлечение всех результатов запроса из объекта cursor
             table_exists = cursor.fetchall()
 
             if table_exists:
+
                 dbInit = sg.popup("База данных инициализированна!")
+
                 if dbInit == "OK":
 
-                    cursor.execute("DELETE FROM password;")
                     # Очистка базы данных
+                    cursor.execute("DELETE FROM password;")
                     conn.commit()
+                    # заполение базы данных значениями NULL
                     cursor.execute("""INSERT INTO password (
                                    salt,
                                    iv,
                                    ciphered_bytes) 
                                    VALUES (NULL, NULL, NULL);""")
-                    # заполение базы данных значениями NULL
                     conn.commit()
-                    # Вызов функции шифрования пароля
                     PassEncrypt(password)
                     return
 
             table = sg.popup("Создание необходимых таблиц!", )
+
             if table == "OK":
 
                 # Генерация таблицы и полей в ней
@@ -113,7 +113,6 @@ while True:
                               iv TEXT,
                               ciphered_bytes TEXT)"""
                 cursor.execute(createTable)
-                # Указание и выполнение запроса на генерацию таблицы и полей
                 conn.commit()
                 cursor.execute("""INSERT INTO password (
                                salt,
@@ -122,12 +121,10 @@ while True:
                                VALUES (NULL, NULL, NULL);""")
                 conn.commit()
                 dbDone = sg.popup("База данных создана и настроена!")
-                if dbDone == "OK":
 
-                    # Вызов функции проверки существования базы данных
+                if dbDone == "OK":
                     CheckDbExists()
 
-        # Проверка на пустое поле ввода мастер-ключа
         def EmptyPassCheck():
             # Проверка, является ли поле ввода мастер-ключа пустым
             # или наполненным пробелами
@@ -138,10 +135,8 @@ while True:
             else:
                 # Очистка поля уведомления
                 window['-TEXT-'].update('')
-                # Вызов функции проверки сушествования базы данных
                 CheckDbExists()
 
-        # Вызов функции проверки на пустое поле ввода мастер-ключа
         EmptyPassCheck()
 
     elif event == 'Расшифровать':
@@ -151,20 +146,21 @@ while True:
         cursor = conn.cursor()
         conn.commit()
 
-        # Функция расшифровки мастер-ключа
         def passDecrypt():
             passwordDecrypt = password.encode('utf-8')
+            # Чтение соли из базы данных
             cursor.execute("SELECT salt FROM password;")
-            # Чтение соли из базы данных и запись в переменную
+            # Запись соли в переменную
             saltDecrypt = bytes(ast.literal_eval(str(cursor.fetchall())[3:-4]))
             # Генерация ключа на основе мастер-ключа и расшифрованной соли
             keyDecrypt = PBKDF2(passwordDecrypt, saltDecrypt, dkLen=32)
+            # Чтение iv из базы данных
             cursor.execute("SELECT iv FROM password")
-            # Чтение iv из базы данных и запись в переменную
+            # Запись iv в переменную
             ivDecrypt = bytes(ast.literal_eval(str(cursor.fetchall())[3:-4]))
-            cursor.execute("SELECT ciphered_bytes FROM password")
             # Чтение зашифрованного мастер-ключа из базы данных
-            # и запись в переменную
+            cursor.execute("SELECT ciphered_bytes FROM password")
+            # Запись зашифрованного мастер-ключа в переменную
             DecryptedBytes = bytes(ast.literal_eval
                                    (str(cursor.fetchall())[3:-4]))
             # Создание объекта на основе расшифрованных ключа и iv
@@ -182,12 +178,10 @@ while True:
                 sg.popup("Ошибка! Скорее всего Вы "
                          "ввели неправильный мастер-ключ!")
 
-        # Вызов функции расшифровки мастер-ключа
         passDecrypt()
 
     elif event == 'Сгенерировать мастер-ключ':
 
-        # Функция генерации мастер-ключа
         def PassGen():
             # Запись в переменную выбранной длинны мастер-ключа
             pass_length = int(values['-LENGTH-'])
@@ -227,7 +221,6 @@ while True:
             # Вывод сгенерированного мастер-ключа в поле ввода
             window['-PASS-'].update("".join(map(str, GenPass))[:pass_length])
 
-        # Вызов функции генерации мастер-ключа
         PassGen()
 
 window.close()
