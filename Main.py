@@ -8,15 +8,11 @@ from Crypto.Protocol.KDF import PBKDF2
 from Crypto.Cipher import AES
 
 layout = [  # Разметка интерфейса
-    [sg.Text('Введите мастер-ключ:'), sg.InputText(key='-PASS-', )],
-    # Блок текста и поля, в которое вводится мастер-ключ
-    [sg.Button('Сгенерировать мастер-ключ'), sg.Checkbox('Цифры', k='-NUMBER-'),
-     # Кнопка генерации мастер-ключа и галочка использования в генерации цифр
-     sg.Checkbox('Спец. символы', k='-SPEC-'), sg.Checkbox('Разные регистры', k='-REGISTER-'),
-     # Галочка использования в генерации специальных символов и галочка использования в генерации разных регистров
+    [sg.Text('Введите мастер-ключ:'), sg.InputText(key='-PASS-', )],  # Блок текста и поля, в которое вводится мастер-ключ
+    [sg.Button('Сгенерировать мастер-ключ'), sg.Checkbox('Цифры', k='-NUMBER-'),  # Кнопка генерации мастер-ключа и галочка использования в генерации цифр
+     sg.Checkbox('Спец. символы', k='-SPEC-'), sg.Checkbox('Разные регистры', k='-REGISTER-'),  # Галочка использования в генерации специальных символов и галочка использования в генерации разных регистров
      sg.Text('Длина мастер-ключа:', size=(16, 1), justification='r', pad=(0, 0)),
-     sg.Combo(['6', '8', '10', '12', '16'], default_value='12', s=(15, 22), enable_events=True, readonly=True,
-              k='-LENGTH-')],  # Список выбора длинны генерации мастер-ключа
+     sg.Combo(['6', '8', '10', '12', '16'], default_value='12', s=(15, 22), enable_events=True, readonly=True, k='-LENGTH-')],  # Список выбора длинны генерации мастер-ключа
     [sg.Button('Зашифровать'), sg.Button('Расшифровать')],  # Кнопки шифровки и расшифровки мастер-ключа
     [sg.Text(key='-TEXT-')]
 ]
@@ -43,10 +39,8 @@ while True:
             cursor.execute(f"UPDATE password SET salt = '{list(salt)}';")
             conn.commit()  # Занесение соли в базу данных
             key = PBKDF2(passwrd, salt, dkLen=32)  # Генерация ключа на основе мастер-ключа и соли
-            cipher_encrypt = AES.new(key,
-                                     AES.MODE_CFB)  # Создание объекта и указание режима шифрования Cipher Feedback, который позволяет работать с данными меньше размера блока шифра.
-            ciphered_bytes = cipher_encrypt.encrypt(
-                passwrd)  # Шифрование мастер-ключа с использованием объекта cipher_encrypt и запись его в переменную ciphered_bytes
+            cipher_encrypt = AES.new(key, AES.MODE_CFB)  # Создание объекта и указание режима шифрования Cipher Feedback, который позволяет работать с данными меньше размера блока шифра.
+            ciphered_bytes = cipher_encrypt.encrypt(passwrd)  # Шифрование мастер-ключа с использованием объекта cipher_encrypt и запись его в переменную ciphered_bytes
             cursor.execute(f"UPDATE password SET ciphered_bytes = '{list(ciphered_bytes)}';")
             conn.commit()  # Запись зашифрованного мастер-ключа в базу данных
             iv = cipher_encrypt.iv  # Запись iv в переменную
@@ -56,8 +50,7 @@ while True:
 
 
         def CheckDbExists():  # Функция проверки существования базы данных
-            cursor.execute(
-                "SELECT name FROM sqlite_master WHERE type='table' AND name='password'")  # Указание запроса для проверки существования базы данных
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='password'")  # Указание запроса для проверки существования базы данных
             table_exists = cursor.fetchall()  # Извлечение всех результатов запроса из объекта cursor
 
             if table_exists:
@@ -107,21 +100,15 @@ while True:
         def passDecrypt():  # Функция расшифровки мастер-ключа
             passwordDecrypt = password.encode('utf-8')
             cursor.execute("SELECT salt FROM password;")
-            saltDecrypt = bytes(
-                ast.literal_eval(str(cursor.fetchall())[3:-4]))  # Чтение соли из базы данных и запись в переменную
-            keyDecrypt = PBKDF2(passwordDecrypt, saltDecrypt,
-                                dkLen=32)  # Генерация ключа на основе мастер-ключа и расшифрованной соли
+            saltDecrypt = bytes(ast.literal_eval(str(cursor.fetchall())[3:-4]))  # Чтение соли из базы данных и запись в переменную
+            keyDecrypt = PBKDF2(passwordDecrypt, saltDecrypt, dkLen=32)  # Генерация ключа на основе мастер-ключа и расшифрованной соли
             cursor.execute("SELECT iv FROM password")
-            ivDecrypt = bytes(
-                ast.literal_eval(str(cursor.fetchall())[3:-4]))  # Чтение iv из базы данных и запись в переменную
+            ivDecrypt = bytes(ast.literal_eval(str(cursor.fetchall())[3:-4]))  # Чтение iv из базы данных и запись в переменную
             cursor.execute("SELECT ciphered_bytes FROM password")
-            DecryptedBytes = bytes(ast.literal_eval(str(cursor.fetchall())[
-                                                    3:-4]))  # Чтение зашифрованного мастер-ключа из базы данных и запись в переменную
-            cipher_decrypt = AES.new(keyDecrypt, AES.MODE_CFB,
-                                     iv=ivDecrypt)  # Создание объекта на основе расшифрованных ключа и iv
+            DecryptedBytes = bytes(ast.literal_eval(str(cursor.fetchall())[3:-4]))  # Чтение зашифрованного мастер-ключа из базы данных и запись в переменную
+            cipher_decrypt = AES.new(keyDecrypt, AES.MODE_CFB, iv=ivDecrypt)  # Создание объекта на основе расшифрованных ключа и iv
             deciphered_bytes = cipher_decrypt.decrypt(DecryptedBytes)  # Расшифровка мастер-ключа
-            if deciphered_bytes == values['-PASS-'].encode(
-                    'utf-8'):  # Проверка, сходятся ли расшифрованный мастер-ключ с введённым
+            if deciphered_bytes == values['-PASS-'].encode('utf-8'):  # Проверка, сходятся ли расшифрованный мастер-ключ с введённым
                 sg.popup("Мастер-ключ успешно расшифрован")
             else:
                 sg.popup("Ошибка! Скорее всего Вы ввели неправильный мастер-ключ!")
@@ -136,16 +123,13 @@ while True:
             GenPass = []  # Лист символов мастер-ключа
 
             for i in range(pass_length):  # Цикл генерации случайных символов
-                GenPass.append(random.choice(
-                    string.ascii_lowercase))  # Добавление в лист мастер-ключа случайных символов латиницы нижнего регистра
+                GenPass.append(random.choice(string.ascii_lowercase))  # Добавление в лист мастер-ключа случайных символов латиницы нижнего регистра
                 if values['-NUMBER-']:  # Проверка, выбран ли параметр цифр
                     GenPass.append(random.choice(string.digits))  # Добавление в лист мастер-ключа случайных цифр
                 if values['-SPEC-']:  # Проверка, выбран ли параметр специальных знаков
-                    GenPass.append(random.choice(
-                        string.punctuation))  # Добавление в лист мастер-ключа случайных специальных знаков
+                    GenPass.append(random.choice(string.punctuation))  # Добавление в лист мастер-ключа случайных специальных знаков
                 if values['-REGISTER-']:  # Проверка, выбран ли параметр верхнего регистра
-                    GenPass.append(random.choice(
-                        string.ascii_uppercase))  # Добавление в лист мастер-ключа случайного символа верхнего регистра
+                    GenPass.append(random.choice(string.ascii_uppercase))  # Добавление в лист мастер-ключа случайного символа верхнего регистра
 
             random.shuffle(GenPass)  # Перемешивание символов в случайном порядке в листе мастер-ключа
 
