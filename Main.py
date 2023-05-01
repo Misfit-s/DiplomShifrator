@@ -6,25 +6,30 @@ import ast
 from Crypto.Random import get_random_bytes
 from Crypto.Protocol.KDF import PBKDF2
 from Crypto.Cipher import AES
+from passwords import Main
 
-# Разметка интерфейса
 layout = [
     # Блок текста и поля, в которое вводится мастер-ключ
     [sg.Text('Введите мастер-ключ:'), sg.InputText(key='-PASS-', )],
-    # Кнопка генерации мастер-ключа и галочка использования в генерации цифр
-    [sg.Button('Сгенерировать мастер-ключ'), sg.Checkbox('Цифры', k='-NUMBER-'),
-     # Галочка использования в генерации специальных символов
-     # и галочка использования в генерации разных регистров
-     sg.Checkbox('Спец. символы', k='-SPEC-'), sg.Checkbox('Разные регистры',
-                                                           k='-REGISTER-'),
-     sg.Text('Длина мастер-ключа:', size=(16, 1), justification='r',
-             pad=(0, 0)),
-     # Список выбора длинны генерации мастер-ключа
-     sg.Combo(['6', '8', '10', '12', '16'], default_value='12', s=(15, 22),
-              enable_events=True, readonly=True, k='-LENGTH-')],
+
+    [
+        # Кнопка генерации мастер-ключа
+        sg.Button('Сгенерировать мастер-ключ'),
+        # Галочка использования в генерации цифр
+        sg.Checkbox('Цифры', k='-NUMBER-'),
+        # Галочка использования в генерации специальных символов
+        sg.Checkbox('Спец. символы', k='-SPEC-'),
+        # Галочка использования в генерации разных регистров
+        sg.Checkbox('Разные регистры', k='-REGISTER-'),
+        sg.Text('Длина мастер-ключа:', size=(16, 1), justification='r',
+                pad=(0, 0)),
+        # Список выбора длинны генерации мастер-ключа
+        sg.Combo(['6', '8', '10', '12', '16'], default_value='12', s=(15, 22),
+                 enable_events=True, readonly=True, k='-LENGTH-')
+    ],
     # Кнопки шифровки и расшифровки мастер-ключа
     [sg.Button('Зашифровать'), sg.Button('Расшифровать')],
-    [sg.Text(key='-TEXT-')]
+    [sg.Text(key='-TEXT-')],
 ]
 
 # Придание окну разметки интерфейса
@@ -49,7 +54,6 @@ while True:
         conn.commit()
 
         def PassEncrypt(passwrd):
-            # Кодирование мастер-ключа в кодировку utf-8
             passwrd = passwrd.encode("utf-8")
             # Генерация соли
             salt = get_random_bytes(32)
@@ -69,13 +73,12 @@ while True:
             cursor.execute(f"UPDATE password SET cipheredBytes = "
                            f"'{list(cipheredBytes)}';")
             conn.commit()
-            # Запись iv в переменную
             iv = cipherEncrypt.iv
             # Запись iv в базу данных
             cursor.execute(f"UPDATE password SET iv = '{list(iv)}';")
             conn.commit()
-            # Показ сообщения об успешности шифрования мастер-ключа
             sg.popup("Ваш мастер-ключ успешно зашифрован!")
+
 
         def CheckDbExists():
             # Запрос для проверки существования базы данных
@@ -94,36 +97,50 @@ while True:
                     cursor.execute("DELETE FROM password;")
                     conn.commit()
                     # заполение базы данных значениями NULL
-                    cursor.execute("""INSERT INTO password (
-                                   salt,
-                                   iv,
-                                   cipheredBytes) 
-                                   VALUES (NULL, NULL, NULL);""")
+                    cursor.execute(
+                        """
+                        INSERT INTO password (
+                        salt,
+                        iv,
+                        cipheredBytes
+                        ) 
+                        VALUES (NULL, NULL, NULL);
+                        """
+                    )
                     conn.commit()
                     PassEncrypt(password)
                     return
 
-            table = sg.popup("Создание необходимых таблиц!", )
+            table = sg.popup("Создание необходимых таблиц!")
 
             if table == "OK":
 
                 # Генерация таблицы и полей в ней
-                createTable = """CREATE TABLE password ( 
+                createTable = """
+                              CREATE TABLE password (
                               salt TEXT,
                               iv TEXT,
-                              cipheredBytes TEXT)"""
+                              cipheredBytes TEXT
+                              )
+                              """
                 cursor.execute(createTable)
                 conn.commit()
-                cursor.execute("""INSERT INTO password (
-                               salt,
-                               iv,
-                               cipheredBytes)
-                               VALUES (NULL, NULL, NULL);""")
+                cursor.execute(
+                    """
+                    INSERT INTO password (
+                    salt,
+                    iv,
+                    cipheredBytes
+                    )
+                    VALUES (NULL, NULL, NULL);
+                    """
+                )
                 conn.commit()
                 dbDone = sg.popup("База данных создана и настроена!")
 
                 if dbDone == "OK":
                     CheckDbExists()
+
 
         def EmptyPassCheck():
             # Проверка, является ли поле ввода мастер-ключа пустым
@@ -171,7 +188,12 @@ while True:
             # Проверка, сходятся ли расшифрованный мастер-ключ с введённым
             if decipheredBytes == values['-PASS-'].encode('utf-8'):
 
-                sg.popup("Мастер-ключ успешно расшифрован")
+                login = sg.popup("Мастер-ключ успешно расшифрован")
+
+                if login == "OK":
+
+                    window.close()
+                    Main()
 
             else:
 
