@@ -5,10 +5,11 @@ def Main():
 
 	data = []
 	head = ['Сервис', 'Логин', 'Пароль']
+	category = []
 
 	table = sg.Table(values=data, headings=head, expand_x=True)
-	combo = sg.Combo(values=('value', 'value2'), enable_events=True,
-	                 readonly=True, k='combo', expand_x=True)
+	combo = sg.Combo(category, enable_events=True,
+	                 readonly=True, k='combo', expand_x=True, size=25)
 
 	layout = [
 		[sg.Text('Ваши пароли', justification='center', expand_x=True)],
@@ -29,9 +30,11 @@ def Main():
 		if event == sg.WINDOW_CLOSED:
 			break
 
-		elif event == 'Добавить вкладку':
-			pass
+		elif event == 'Добавить категорию':
+			categoryName = sg.popup_get_text('Введите название категории')
+			category.append(categoryName)
+			window['combo'].update(values=category, value=values['combo'])
+			combo.update(category)
 
 		elif event == 'Выход':
-
 			window.close()
