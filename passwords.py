@@ -1,9 +1,9 @@
 import sqlite3
+
 import PySimpleGUI as sg
 
 
 def Main():
-
 	data = []
 	head = ['Сервис', 'Логин', 'Пароль']
 
@@ -14,7 +14,6 @@ def Main():
 	cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND "
 	               "name != 'password'")
 	category = cursor.fetchall()
-	print(category)
 
 	table = sg.Table(values=data, headings=head, expand_x=True)
 	combo = sg.Combo(category, enable_events=True,
@@ -39,33 +38,47 @@ def Main():
 		try:
 			window['combo'].update(values=category, value=values['combo'])
 
-		except Exception as e:
+		except Exception:
 			break
 
 		if event == sg.WINDOW_CLOSED:
 			break
 
 		elif event == 'Добавить категорию':
-			categoryName = sg.popup_get_text('Введите название категории')
+			categoryName = sg.popup_get_text('Введите название'
+			                                 ' категории').replace(
+				'.', '_').replace(' ', '_')
 
 			if categoryName is None:
 				pass
 
 			else:
-				category.append(categoryName)
-				window['combo'].update(values=category, value=values['combo'])
-				newCategoryIndex = category.index(categoryName)
-				combo.update(category[newCategoryIndex])
-				createCategoryTable = f"""
-				CREATE TABLE {categoryName} (
-				id INT,
-				service TEXT,
-				login TEXT,
-				password TEXT
-				)
-				"""
-				cursor.execute(createCategoryTable)
-				conn.commit()
+
+				def categoryAdd():
+					category.append(categoryName)
+					window['combo'].update(values=category,
+					                       value=values['combo'])
+					newCategoryIndex = category.index(categoryName)
+					combo.update(category[newCategoryIndex])
+					createCategoryTable = f"""
+										CREATE TABLE {categoryName} (
+										id INT,
+										service TEXT,
+										login TEXT,
+										password TEXT
+										)
+										"""
+					cursor.execute(createCategoryTable)
+					conn.commit()
+
+				try:
+					categoryAdd()
+
+				except sqlite3.OperationalError:
+					popup = sg.popup('У Вас уже есть категория '
+					                 'с таким названием!')
+					if popup == 'OK':
+						Main()
 
 		elif event == 'Удалить категорию':
 

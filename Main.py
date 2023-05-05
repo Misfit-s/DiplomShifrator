@@ -130,7 +130,7 @@ while True:
                     INSERT INTO password (
                     salt,
                     iv,
-                    cipheredBytes,
+                    cipheredBytes
                     )
                     VALUES (NULL, NULL, NULL);
                     """
