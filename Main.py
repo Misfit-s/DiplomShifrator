@@ -6,7 +6,7 @@ import ast
 from Crypto.Random import get_random_bytes
 from Crypto.Protocol.KDF import PBKDF2
 from Crypto.Cipher import AES
-from passwords import Main
+from passwords import PassStorage
 
 layout = [
     # Блок текста и поля, в которое вводится мастер-ключ
@@ -193,12 +193,13 @@ while True:
                 if login == "OK":
 
                     window.close()
-                    Main()
+                    PassStorage()
 
             else:
 
                 sg.popup("Ошибка! Скорее всего Вы "
                          "ввели неправильный мастер-ключ!")
+            return keyDecrypt
 
         passDecrypt()
 
