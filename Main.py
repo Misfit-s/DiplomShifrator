@@ -33,7 +33,7 @@ layout = [
 ]
 
 # Придание окну разметки интерфейса
-window = sg.Window('Шифрование слова', layout)
+window = sg.Window('WordCryptor-AES+', layout)
 
 while True:
     event, values = window.read()
